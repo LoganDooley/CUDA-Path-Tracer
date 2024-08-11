@@ -1,0 +1,3 @@
+[submodule "PathTracer/PathTracer/Libraries/glm"]
+	path = PathTracer/PathTracer/Libraries/glm
+	url = https://github.com/g-truc/glm.git
