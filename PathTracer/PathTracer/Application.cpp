@@ -1,5 +1,8 @@
 #include "Application.h"
+#include "ShaderLoader.h"
+#include <vector>
 #include <iostream>
+#include "Debug.h"
 
 Application::Application():
 	m_window(nullptr)
@@ -50,7 +53,46 @@ void Application::Init()
 		throw std::exception("Failed to load GLAD");
 	}
 
-	m_camera = std::make_unique<Camera>(640, 480);
+	m_camera = std::make_unique<Camera>(1, 640, 480);
+
+	InitOpenGLObjects();
+}
+
+void Application::InitOpenGLObjects() {
+	glClearColor(0, 0, 0, 1);
+
+	m_textureShader = ShaderLoader::CreateShaderProgram("Shaders/Texture.vert", "Shaders/Texture.frag");
+
+	std::vector<GLfloat> fullscreenQuadData = {
+		-1, 1, 0, 0, 1,
+		-1, -1, 0, 0, 0,
+		1, -1, 0, 1, 0,
+		-1, 1, 0, 0, 1,
+		1, -1, 0, 1, 0,
+		1, 1, 0, 1, 1,
+	};
+
+	GLuint fullscreenVbo;
+	glGenBuffers(1, &fullscreenVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, fullscreenVbo);
+	glBufferData(GL_ARRAY_BUFFER, fullscreenQuadData.size() * sizeof(GLfloat), fullscreenQuadData.data(), GL_STATIC_DRAW);
+	glGenVertexArrays(1, &m_fullscreenVAO);
+	glBindVertexArray(m_fullscreenVAO);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+
+	glGenTextures(1, &m_displayTexture);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_displayTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, 640, 480, 0, GL_RGB,
+		GL_FLOAT, m_camera->DebugGetPixelCenters());
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	glUseProgram(m_textureShader);
+	m_textureLocation = glGetUniformLocation(m_textureShader, "tex");
+	glUniform1i(m_textureLocation, 0);
 }
 
 void Application::Update()
@@ -59,12 +101,13 @@ void Application::Update()
 
 void Application::Render()
 {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
 void Application::End()
 {
 	std::cout << "End" << std::endl;
-	m_camera->DebugPixelCenters();
 	glfwDestroyWindow(m_window);
 	glfwTerminate();
 }

@@ -14,7 +14,8 @@ inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort =
 	}
 }
 
-Camera::Camera(int screenWidth, int screenHeight) :
+Camera::Camera(float near, int screenWidth, int screenHeight) :
+	m_near(near),
 	m_screenWidth(screenWidth),
 	m_screenHeight(screenHeight),
 	m_pos(glm::vec3(0, 0, 0)),
@@ -34,31 +35,38 @@ Camera::~Camera()
 	cudaFree(h_pixelCenters);
 }
 
-__global__ void resizeCamera(float* pixelCenters, const int screenWidth)
+__global__ void resizeCamera(float* pixelCenters, const float near, const float halfWidth, const float halfHeight, const int screenWidth, const int screenHeight)
 {
 	int i = blockIdx.x;
 	int j = blockIdx.y;
 	int pixelIndex = j * screenWidth + i;
-	float relative = float(i) / screenWidth;
-	pixelCenters[pixelIndex] = relative;
+	
+	float x = halfWidth * (float(2 * i) / float(screenWidth) - 1);
+	float y = halfHeight * (float(2 * j) / float(screenHeight) - 1);
+
+
+	pixelCenters[3 * pixelIndex] = x;
+	pixelCenters[3 * pixelIndex + 1] = y;
+	pixelCenters[3 * pixelIndex + 2] = -near;
 }
 
 void Camera::Resize(int screenWidth, int screenHeight) {
 	m_screenWidth = screenWidth;
 	m_screenHeight = screenHeight;
 	m_aspect = float(screenWidth) / screenHeight;
+	float halfWidth = m_near * glm::tan(m_fov / 2);
+	float halfHeight = halfWidth / m_aspect;
 	
 	// Will no-op if m_pixelCenters is nullptr
 	cudaFree(d_pixelCenters);
-	cudaMalloc(&d_pixelCenters, screenWidth * screenHeight * sizeof(float));
-	cudaMemset(d_pixelCenters, 0, screenWidth * screenHeight * sizeof(float));
+	cudaMalloc(&d_pixelCenters, 3 * screenWidth * screenHeight * sizeof(float));
 	cudaFreeHost(h_pixelCenters);
-	cudaMallocHost(&h_pixelCenters, screenWidth * screenHeight * sizeof(float));
+	cudaMallocHost(&h_pixelCenters, 3 * screenWidth * screenHeight * sizeof(float));
 
-	resizeCamera<<<dim3(screenWidth, screenHeight), 1>>> (d_pixelCenters, screenWidth);
+	resizeCamera<<<dim3(screenWidth, screenHeight), 1>>> (d_pixelCenters, m_near, halfWidth, halfHeight, m_screenWidth, m_screenHeight);
 	gpuErrchk(cudaPeekAtLastError());
 
-	cudaMemcpy(h_pixelCenters, d_pixelCenters, screenWidth * screenHeight * sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy(h_pixelCenters, d_pixelCenters, 3 * screenWidth * screenHeight * sizeof(float), cudaMemcpyDeviceToHost);
 }
 
 glm::mat4 Camera::GetInverseView()
@@ -68,13 +76,15 @@ glm::mat4 Camera::GetInverseView()
 
 void Camera::DebugPixelCenters()
 {
-	if (h_pixelCenters == nullptr) {
-		std::cout << "hi" << std::endl;
-	}
-	for (int i = 0; i < m_screenWidth; i++) {
+	for (int i = 0; i < 3 * m_screenWidth; i+= 3) {
 		float value = h_pixelCenters[i];
 		std::cout << value << std::endl;
 	}
+}
+
+float* Camera::DebugGetPixelCenters()
+{
+	return h_pixelCenters;
 }
 
 void Camera::UpdateInverseView()

@@ -6,7 +6,7 @@
 class Camera
 {
 public:
-	Camera(int screenWidth, int screenHeight);
+	Camera(float near, int screenWidth, int screenHeight);
 	~Camera();
 
 	void Resize(int screenWidth, int screenHeight);
@@ -14,12 +14,15 @@ public:
 
 	void DebugPixelCenters();
 
+	float* DebugGetPixelCenters();
+
 private:
 	void UpdateInverseView();
 
 	int m_screenWidth;
 	int m_screenHeight;
 
+	float m_near;
 	glm::vec3 m_pos;
 	glm::vec3 m_up;
 	glm::vec3 m_look;

@@ -15,11 +15,18 @@ public:
 
 private:
 	void Init();
+	void InitOpenGLObjects();
 	void Update();
 	void Render();
 	void End();
 
 	GLFWwindow* m_window;
 	std::unique_ptr<Camera> m_camera;
+
+	GLuint m_fullscreenVAO;
+	GLuint m_fullscreenVBO;
+	GLuint m_displayTexture;
+	GLuint m_textureShader;
+	GLint m_textureLocation;
 };
 
