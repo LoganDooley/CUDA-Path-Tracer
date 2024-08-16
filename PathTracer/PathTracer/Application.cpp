@@ -5,7 +5,9 @@
 #include "Debug.h"
 
 Application::Application():
-	m_window(nullptr)
+	m_window(nullptr),
+	m_screenWidth(640),
+	m_screenHeight(480)
 {
 }
 
@@ -38,7 +40,7 @@ void Application::Init()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	m_window = glfwCreateWindow(640, 480, "Temp", NULL, NULL);
+	m_window = glfwCreateWindow(m_screenWidth, m_screenHeight, "Temp", NULL, NULL);
 	if (!m_window) {
 		glfwTerminate();
 		std::cout << "Failed to create window" << std::endl;
@@ -47,6 +49,9 @@ void Application::Init()
 	glfwMakeContextCurrent(m_window);
 	glfwSwapInterval(0);
 
+	glfwSetWindowUserPointer(m_window, this);
+	glfwSetFramebufferSizeCallback(m_window, FramebufferResizeCallback);
+
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		glfwTerminate();
 		std::cout << "Failed to load GLAD" << std::endl;
@@ -54,6 +59,8 @@ void Application::Init()
 	}
 
 	m_camera = std::make_unique<Camera>(1, 640, 480);
+
+	glViewport(0, 0, m_screenWidth, m_screenHeight);
 
 	InitOpenGLObjects();
 }
@@ -86,9 +93,10 @@ void Application::InitOpenGLObjects() {
 	glGenTextures(1, &m_displayTexture);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_displayTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, 640, 480, 0, GL_RGB,
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, m_screenWidth, m_screenHeight, 0, GL_RGB,
 		GL_FLOAT, m_camera->DebugGetPixelCenters());
-	glGenerateMipmap(GL_TEXTURE_2D);
 
 	glUseProgram(m_textureShader);
 	m_textureLocation = glGetUniformLocation(m_textureShader, "tex");
@@ -110,4 +118,21 @@ void Application::End()
 	std::cout << "End" << std::endl;
 	glfwDestroyWindow(m_window);
 	glfwTerminate();
+}
+
+void Application::Resize(int width, int height) 
+{
+	m_screenWidth = width;
+	m_screenHeight = height;
+
+	glViewport(0, 0, m_screenWidth, m_screenHeight);
+	m_camera->Resize(m_screenWidth, m_screenHeight);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, m_screenWidth, m_screenHeight, 0, GL_RGB,
+		GL_FLOAT, m_camera->DebugGetPixelCenters());
+}
+
+void Application::FramebufferResizeCallback(GLFWwindow* window, int width, int height)
+{
+	Application* app = (Application*)glfwGetWindowUserPointer(window);;
+	app->Resize(width, height);
 }

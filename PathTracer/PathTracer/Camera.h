@@ -19,9 +19,6 @@ public:
 private:
 	void UpdateInverseView();
 
-	int m_screenWidth;
-	int m_screenHeight;
-
 	float m_near;
 	glm::vec3 m_pos;
 	glm::vec3 m_up;
