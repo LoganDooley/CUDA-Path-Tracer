@@ -3,6 +3,7 @@
   <ItemGroup>
     <CudaCompile Include="Camera.cu" />
     <CudaCompile Include="kernel.cu" />
+    <CudaCompile Include="PathTracer.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
@@ -11,8 +12,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
-    <ClInclude Include="Camera.h" />
     <ClInclude Include="Debug.h" />
+    <ClInclude Include="ShaderLoader.h" />
+    <ClInclude Include="PathTracer.cuh" />
+    <ClInclude Include="Camera.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Texture.vert">

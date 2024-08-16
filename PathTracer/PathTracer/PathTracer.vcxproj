@@ -85,6 +85,7 @@
   <ItemGroup>
     <CudaCompile Include="Camera.cu" />
     <CudaCompile Include="kernel.cu" />
+    <CudaCompile Include="PathTracer.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
@@ -93,8 +94,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
-    <ClInclude Include="Camera.h" />
+    <ClInclude Include="Camera.cuh" />
     <ClInclude Include="Debug.h" />
+    <ClInclude Include="PathTracer.cuh" />
     <ClInclude Include="ShaderLoader.h" />
   </ItemGroup>
   <ItemGroup>

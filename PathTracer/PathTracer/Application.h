@@ -4,7 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <string>
 #include <memory>
-#include "Camera.h"
+#include "PathTracer.cuh"
 
 class Application
 {
@@ -24,7 +24,7 @@ private:
 	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 	GLFWwindow* m_window;
-	std::unique_ptr<Camera> m_camera;
+	std::unique_ptr<PathTracer> m_pathTracer;
 
 	int m_screenWidth;
 	int m_screenHeight;

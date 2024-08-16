@@ -1,7 +1,6 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include "cuda_runtime.h"
 
 class Camera
 {
@@ -12,9 +11,8 @@ public:
 	void Resize(int screenWidth, int screenHeight);
 	glm::mat4 GetInverseView();
 
-	void DebugPixelCenters();
-
-	float* DebugGetPixelCenters();
+	float* GetDevicePixelCenters();
+	float* GetHostPixelCenters();
 
 private:
 	void UpdateInverseView();
@@ -31,4 +29,3 @@ private:
 	float* d_pixelCenters = nullptr;
 	float* h_pixelCenters = nullptr;
 };
-

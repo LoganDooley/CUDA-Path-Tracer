@@ -58,7 +58,7 @@ void Application::Init()
 		throw std::exception("Failed to load GLAD");
 	}
 
-	m_camera = std::make_unique<Camera>(1, 640, 480);
+	m_pathTracer = std::make_unique<PathTracer>(m_screenWidth, m_screenHeight);
 
 	glViewport(0, 0, m_screenWidth, m_screenHeight);
 
@@ -96,7 +96,7 @@ void Application::InitOpenGLObjects() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, m_screenWidth, m_screenHeight, 0, GL_RGB,
-		GL_FLOAT, m_camera->DebugGetPixelCenters());
+		GL_FLOAT, NULL);
 
 	glUseProgram(m_textureShader);
 	m_textureLocation = glGetUniformLocation(m_textureShader, "tex");
@@ -105,11 +105,13 @@ void Application::InitOpenGLObjects() {
 
 void Application::Update()
 {
+	m_pathTracer->Render(1);
 }
 
 void Application::Render()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_screenWidth, m_screenHeight, GL_RGB, GL_FLOAT, m_pathTracer->GetRenderedImage());
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
@@ -126,9 +128,10 @@ void Application::Resize(int width, int height)
 	m_screenHeight = height;
 
 	glViewport(0, 0, m_screenWidth, m_screenHeight);
-	m_camera->Resize(m_screenWidth, m_screenHeight);
+	m_pathTracer->Resize(m_screenWidth, m_screenHeight);
+
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, m_screenWidth, m_screenHeight, 0, GL_RGB,
-		GL_FLOAT, m_camera->DebugGetPixelCenters());
+		GL_FLOAT, NULL);
 }
 
 void Application::FramebufferResizeCallback(GLFWwindow* window, int width, int height)

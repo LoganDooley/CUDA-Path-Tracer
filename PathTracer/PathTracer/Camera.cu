@@ -1,5 +1,6 @@
-#include "Camera.h"
+#include "Camera.cuh"
 
+#include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include <glm/ext.hpp>
 #include <iostream>
@@ -23,6 +24,7 @@ Camera::Camera(float near, int screenWidth, int screenHeight) :
 	m_aspect(float(screenWidth) / screenHeight),
 	m_invView(glm::mat4(1))
 {
+	// Maybe redundant while PathTracer calls resize for the camera in its constructor
 	Resize(screenWidth, screenHeight);
 	UpdateInverseView();
 }
@@ -70,7 +72,12 @@ glm::mat4 Camera::GetInverseView()
 	return m_invView;
 }
 
-float* Camera::DebugGetPixelCenters()
+float* Camera::GetDevicePixelCenters()
+{
+	return d_pixelCenters;
+}
+
+float* Camera::GetHostPixelCenters()
 {
 	return h_pixelCenters;
 }
