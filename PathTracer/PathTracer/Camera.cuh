@@ -11,8 +11,7 @@ public:
 	void Resize(int screenWidth, int screenHeight);
 	glm::mat4 GetInverseView();
 
-	float* GetDevicePixelCenters();
-	float* GetHostPixelCenters();
+	float* GetDevicePixelCorners();
 
 private:
 	void UpdateInverseView();
@@ -26,6 +25,5 @@ private:
 
 	glm::mat4 m_invView;
 
-	float* d_pixelCenters = nullptr;
-	float* h_pixelCenters = nullptr;
+	float* d_pixelCorners = nullptr;
 };

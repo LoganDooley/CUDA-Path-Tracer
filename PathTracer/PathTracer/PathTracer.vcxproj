@@ -95,9 +95,13 @@
   <ItemGroup>
     <ClInclude Include="Application.h" />
     <ClInclude Include="Camera.cuh" />
+    <ClInclude Include="CudaMath.cuh" />
     <ClInclude Include="Debug.h" />
     <ClInclude Include="PathTracer.cuh" />
+    <ClInclude Include="Ray.cuh" />
+    <ClInclude Include="Scene.cuh" />
     <ClInclude Include="ShaderLoader.h" />
+    <ClInclude Include="Shape.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Texture.frag" />

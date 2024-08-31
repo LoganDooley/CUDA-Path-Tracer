@@ -16,6 +16,10 @@
     <ClInclude Include="ShaderLoader.h" />
     <ClInclude Include="PathTracer.cuh" />
     <ClInclude Include="Camera.cuh" />
+    <ClInclude Include="Scene.cuh" />
+    <ClInclude Include="Shape.cuh" />
+    <ClInclude Include="Ray.cuh" />
+    <ClInclude Include="CudaMath.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Texture.vert">
