@@ -95,11 +95,13 @@ namespace CudaMath {
 	}
 
 	struct Mat4f {
-		__host__ void FromGLM(glm::mat4 mat4) {
-			glm::vec4 r0 = glm::row(mat4, 0);
-			glm::vec4 r1 = glm::row(mat4, 1);
-			glm::vec4 r2 = glm::row(mat4, 2);
-			glm::vec4 r3 = glm::row(mat4, 3);
+		__host__ static Mat4f FromGLM(glm::mat4 mat4) {
+			Mat4f result = {};
+			result.m_r0 = Vec4f::FromGLM(glm::row(mat4, 0));
+			result.m_r1 = Vec4f::FromGLM(glm::row(mat4, 1));
+			result.m_r2 = Vec4f::FromGLM(glm::row(mat4, 2));
+			result.m_r3 = Vec4f::FromGLM(glm::row(mat4, 3));
+			return result;
 		}
 
 		inline __device__ Vec4f operator*(Vec4f v4) {
