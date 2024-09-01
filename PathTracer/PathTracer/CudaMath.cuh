@@ -1,7 +1,7 @@
 #pragma once
 
-#include "cuda_runtime.h"
-#include "math_functions.h"
+#include <cuda_runtime.h>
+#include <math_functions.h> 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_access.hpp>
 
@@ -39,6 +39,7 @@ namespace CudaMath {
 			result.m_v3.x = m_v3.x * other;
 			result.m_v3.y = m_v3.y * other;
 			result.m_v3.z = m_v3.z * other;
+			return result;
 		}
 
 		float3 m_v3;
@@ -83,8 +84,46 @@ namespace CudaMath {
 			m_v4.w /= length;
 		}
 
+		inline __device__ void Normalize3() {
+			float length3 = Length3();
+			m_v4.x /= length3;
+			m_v4.y /= length3;
+			m_v4.z /= length3;
+		}
+
 		inline __device__ const float Length() {
 			return sqrtf(powf(m_v4.x, 2) + powf(m_v4.y, 2) + powf(m_v4.z, 2) + powf(m_v4.w, 2));
+		}
+
+		inline __device__ const float Length3() {
+			return sqrtf(powf(m_v4.x, 2) + powf(m_v4.y, 2) + powf(m_v4.z, 2));
+		}
+
+		inline __device__ const Vec4f operator-(const Vec4f& other) {
+			Vec4f result = {};
+			result.m_v4.x = m_v4.x - other.m_v4.x;
+			result.m_v4.y = m_v4.y - other.m_v4.y;
+			result.m_v4.z = m_v4.z - other.m_v4.z;
+			result.m_v4.w = m_v4.w - other.m_v4.w;
+			return result;
+		}
+
+		inline __device__ const Vec4f operator+(const Vec4f& other) {
+			Vec4f result = {};
+			result.m_v4.x = m_v4.x + other.m_v4.x;
+			result.m_v4.y = m_v4.y + other.m_v4.y;
+			result.m_v4.z = m_v4.z + other.m_v4.z;
+			result.m_v4.w = m_v4.w + other.m_v4.w;
+			return result;
+		}
+
+		inline __device__ const Vec4f operator*(const float& other) {
+			Vec4f result = {};
+			result.m_v4.x = m_v4.x * other;
+			result.m_v4.y = m_v4.y * other;
+			result.m_v4.z = m_v4.z * other;
+			result.m_v4.w = m_v4.w * other;
+			return result;
 		}
 
 		float4 m_v4;
@@ -92,6 +131,10 @@ namespace CudaMath {
 
 	inline __device__ float Dot(const Vec4f& a, const Vec4f& b) {
 		return a.m_v4.x * b.m_v4.x + a.m_v4.y * b.m_v4.y + a.m_v4.z * b.m_v4.z + a.m_v4.w * b.m_v4.w;
+	}
+
+	inline __device__ float Dot3(const Vec4f& a, const Vec4f& b) {
+		return a.m_v4.x * b.m_v4.x + a.m_v4.y * b.m_v4.y + a.m_v4.z * b.m_v4.z;
 	}
 
 	struct Mat4f {
@@ -104,18 +147,18 @@ namespace CudaMath {
 			return result;
 		}
 
-		inline __device__ Vec4f operator*(Vec4f v4) {
-			Vec4f result = v4;
-			result.m_v4.x = Dot(m_r0, v4);
-			result.m_v4.y = Dot(m_r1, v4);
-			result.m_v4.z = Dot(m_r2, v4);
-			result.m_v4.w = Dot(m_r3, v4);
-			return result;
-		}
-
 		Vec4f m_r0;
 		Vec4f m_r1;
 		Vec4f m_r2;
 		Vec4f m_r3;
 	};
+
+	inline __device__ Vec4f Transform(const Mat4f& mat, const Vec4f& vec) {
+		Vec4f result = {};
+		result.m_v4.x = Dot(mat.m_r0, vec);
+		result.m_v4.y = Dot(mat.m_r1, vec);
+		result.m_v4.z = Dot(mat.m_r2, vec);
+		result.m_v4.w = Dot(mat.m_r3, vec);
+		return result;
+	}
 }

@@ -1,8 +1,7 @@
 #include "PathTracer.cuh"
 
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
 #include "Scene.cuh"
+#include <device_launch_parameters.h>
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort = true)
@@ -19,6 +18,9 @@ PathTracer::PathTracer(int screenWidth, int screenHeight):
 	m_screenWidth(screenWidth),
 	m_screenHeight(screenHeight)
 {
+	m_scene = new Scene();
+	((Scene*)m_scene)->AddObject((Object::CreateObject(Shape::Type::Sphere, glm::mat4(1))));
+
 	Resize(screenWidth, screenHeight);
 }
 
@@ -26,7 +28,11 @@ PathTracer::~PathTracer()
 {
 }
 
-__global__ void PathTraceScene(float* render, const float* pixelCorners, const int screenWidth)
+__global__ void PathTraceScene(float* render, 
+	const float* pixelCorners, 
+	const int screenWidth,
+	CudaMath::Mat4f invView,
+	Scene scene)
 {
 	int x = blockIdx.x;
 	int y = blockIdx.y;
@@ -40,20 +46,20 @@ __global__ void PathTraceScene(float* render, const float* pixelCorners, const i
 	float cornerY = pixelCorners[greenIndex];
 	float cornerZ = pixelCorners[blueIndex];
 
-	Ray r = { {make_float3(cornerX, cornerY, cornerZ)}, {make_float3(0, 0, 0)}};
-	CudaMath::Mat4f m = {
-		{make_float4(1, 0, 0, 0)},
-		{make_float4(0, 1, 0, 0)},
-		{make_float4(0, 0, 1, 0)},
-		{make_float4(0, 0, 0, 1)}
+	// Camera space ray
+	Ray r = {
+		{make_float4(0, 0, 0, 1)}, 
+		{make_float4(cornerX, cornerY, cornerZ, 0)}
 	};
-	r.Transform(m);
 
-	bool intersected = Shape::Intersect(r, Shape::Type::Sphere);
-	
-	render[redIndex] = r.m_origin.m_v3.x;
-	render[greenIndex] = r.m_origin.m_v3.y;
-	render[blueIndex] = r.m_origin.m_v3.z;
+	// World space ray
+	r.Transform(invView);
+
+	bool intersected = scene.IntersectScene(r);
+
+	render[redIndex] = 0;
+	render[greenIndex] = 0;
+	render[blueIndex] = 0;
 
 	if (intersected) {
 		render[redIndex] = 1;
@@ -62,11 +68,22 @@ __global__ void PathTraceScene(float* render, const float* pixelCorners, const i
 	}
 }
 
+void PathTracer::Update(double dt)
+{
+	m_camera->Update(dt);
+}
+
 void PathTracer::Render(int spp)
 {
+	Scene* scene = (Scene*)m_scene;
+
 	// TODO: Make spp work properly and don't use a whole block for one pixel
-	PathTraceScene<<<dim3(m_screenWidth, m_screenHeight), 1 >>> (d_render, m_camera->GetDevicePixelCorners(), m_screenWidth);
-	gpuErrchk(cudaPeekAtLastError());
+	PathTraceScene<<<dim3(m_screenWidth, m_screenHeight), 1 >>> (d_render, 
+		m_camera->GetDevicePixelCorners(),
+		m_screenWidth,
+		CudaMath::Mat4f::FromGLM(m_camera->GetInverseView()),
+		*scene);
+	//gpuErrchk(cudaPeekAtLastError());
 }
 
 void PathTracer::Resize(int screenWidth, int screenHeight)
@@ -89,4 +106,19 @@ float* PathTracer::GetRenderedImage()
 	// Ensure h_render has correct data before returning
 	cudaDeviceSynchronize();
 	return h_render;
+}
+
+void PathTracer::SetKeyPressed(int key, bool pressed)
+{
+	m_camera->SetKeyPressed(key, pressed);
+}
+
+void PathTracer::SetRightMouseButtonPressed(bool pressed)
+{
+	m_camera->SetRightMouseButtonPressed(pressed);
+}
+
+void PathTracer::SetCursorPos(glm::vec2 position)
+{
+	m_camera->SetCursorPos(position);
 }

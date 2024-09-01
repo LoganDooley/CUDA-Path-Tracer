@@ -3,11 +3,14 @@
 #include "CudaMath.cuh"
 
 struct Ray {
-	__device__ void Transform(CudaMath::Mat4f matrix) {
-		m_origin = (matrix * CudaMath::Vec4f::FromVec3f(m_origin, 1)).ToVec3f();
-		m_direction = (matrix * CudaMath::Vec4f::FromVec3f(m_direction, 0)).ToVec3f();
+	__device__ void Transform(const CudaMath::Mat4f& matrix) {
+		m_origin = CudaMath::Transform(matrix, m_origin);
+		m_origin.m_v4.w = 1;
+		m_direction = CudaMath::Transform(matrix, m_direction);
+		m_direction.Normalize3();
+		m_direction.m_v4.w = 0;
 	}
 
-	CudaMath::Vec3f m_origin;
-	CudaMath::Vec3f m_direction;
+	CudaMath::Vec4f m_origin;
+	CudaMath::Vec4f m_direction;
 };

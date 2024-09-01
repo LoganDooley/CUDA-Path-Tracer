@@ -18,13 +18,37 @@ Application::~Application()
 void Application::Run()
 {
 	Init();
+	double previousTime = glfwGetTime();
+	double lastRender = previousTime;
 	while (!glfwWindowShouldClose(m_window)) {
-		Update();
-		Render();
-		glfwSwapBuffers(m_window);
+		double currentTime = glfwGetTime();
+		Update(currentTime - previousTime);
+		std::string title = "UPS: "+std::to_string(1 / (currentTime - previousTime));
+		glfwSetWindowTitle(m_window, title.c_str());
+		previousTime = currentTime;
+		if (currentTime - lastRender > 1 / 360.f) {
+			lastRender = glfwGetTime();
+			Render();
+			glfwSwapBuffers(m_window);
+		}
 		glfwPollEvents();
 	}
 	End();
+}
+
+void Application::SetKeyPressed(int key, bool pressed)
+{
+	m_pathTracer->SetKeyPressed(key, pressed);
+}
+
+void Application::SetRightMouseButtonPressed(bool pressed)
+{
+	m_pathTracer->SetRightMouseButtonPressed(pressed);
+}
+
+void Application::SetCursorPos(glm::vec2 position)
+{
+	m_pathTracer->SetCursorPos(position);
 }
 
 void Application::Init()
@@ -50,7 +74,13 @@ void Application::Init()
 	glfwSwapInterval(0);
 
 	glfwSetWindowUserPointer(m_window, this);
+	glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	if (glfwRawMouseMotionSupported())
+		glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 	glfwSetFramebufferSizeCallback(m_window, FramebufferResizeCallback);
+	glfwSetKeyCallback(m_window, KeyCallback);
+	glfwSetMouseButtonCallback(m_window, MouseButtonCallback);
+	glfwSetCursorPosCallback(m_window, CursorPosCallback);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		glfwTerminate();
@@ -103,8 +133,9 @@ void Application::InitOpenGLObjects() {
 	glUniform1i(m_textureLocation, 0);
 }
 
-void Application::Update()
+void Application::Update(double dt)
 {
+	m_pathTracer->Update(dt);
 	m_pathTracer->Render(1);
 }
 
@@ -138,4 +169,37 @@ void Application::FramebufferResizeCallback(GLFWwindow* window, int width, int h
 {
 	Application* app = (Application*)glfwGetWindowUserPointer(window);;
 	app->Resize(width, height);
+}
+
+void Application::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	Application* app = (Application*)glfwGetWindowUserPointer(window);
+	if (action == GLFW_PRESS) {
+		if (key == GLFW_KEY_ESCAPE) {
+			glfwSetWindowShouldClose(window, true);
+		}
+		app->SetKeyPressed(key, true);
+	}
+	else if (action == GLFW_RELEASE) {
+		app->SetKeyPressed(key, false);
+	}
+}
+
+void Application::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+{
+	if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+		Application* app = (Application*)glfwGetWindowUserPointer(window);
+
+		if (action == GLFW_PRESS) {
+			app->SetRightMouseButtonPressed(true);
+		}
+		else if (action == GLFW_RELEASE) {
+			app->SetRightMouseButtonPressed(false);
+		}
+	}
+}
+
+void Application::CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
+{
+	Application* app = (Application*)glfwGetWindowUserPointer(window);
+	app->SetCursorPos(glm::vec2(xpos, ypos));
 }
