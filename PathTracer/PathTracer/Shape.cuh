@@ -4,9 +4,9 @@
 
 struct IntersectionData {
 	inline __device__ void Transform(const CudaMath::Mat4f& model, const CudaMath::Mat4f& invModel) {
-		CudaMath::TransformVec4f(m_position, model);
+		m_position = CudaMath::Transform(m_position, model);
 		m_position.m_v4.w = 1;
-		CudaMath::TransformVec4f(m_normal, invModel.GetTranspose());
+		m_normal = CudaMath::Transform(m_normal, invModel.GetTranspose());
 		m_normal.Normalize3();
 		m_normal.m_v4.w = 0;
 	}

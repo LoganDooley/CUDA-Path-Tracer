@@ -64,12 +64,9 @@ __global__ void PathTraceScene(float* render,
 	render[blueIndex] = 0;
 
 	if (intersected) {
-		render[redIndex] = 1;
-		render[greenIndex] = 1;
-		render[blueIndex] = 1;
-		//render[redIndex] = intersectionData.m_normal.m_v4.x;
-		//render[greenIndex] = intersectionData.m_normal.m_v4.y;
-		//render[blueIndex] = intersectionData.m_normal.m_v4.z;
+		render[redIndex] = intersectionData.m_normal.m_v4.x;
+		render[greenIndex] = intersectionData.m_normal.m_v4.y;
+		render[blueIndex] = intersectionData.m_normal.m_v4.z;
 	}
 }
 

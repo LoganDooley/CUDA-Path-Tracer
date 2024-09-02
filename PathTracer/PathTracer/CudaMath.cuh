@@ -205,10 +205,12 @@ namespace CudaMath {
 		Vec4f m_r3;
 	};
 
-	inline __device__ void TransformVec4f(Vec4f& vec, const Mat4f& mat) {
-		vec.m_v4.x = Dot(mat.m_r0, vec);
-		vec.m_v4.y = Dot(mat.m_r1, vec);
-		vec.m_v4.z = Dot(mat.m_r2, vec);
-		vec.m_v4.w = Dot(mat.m_r3, vec);
+	inline __device__ Vec4f Transform(const Vec4f& vec, const Mat4f& mat) {
+		Vec4f result = {};
+		result.m_v4.x = Dot(mat.m_r0, vec);
+		result.m_v4.y = Dot(mat.m_r1, vec);
+		result.m_v4.z = Dot(mat.m_r2, vec);
+		result.m_v4.w = Dot(mat.m_r3, vec);
+		return result;
 	}
 }

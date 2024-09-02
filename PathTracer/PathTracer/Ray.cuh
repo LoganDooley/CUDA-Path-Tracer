@@ -4,9 +4,9 @@
 
 struct Ray {
 	__device__ void Transform(const CudaMath::Mat4f& matrix) {
-		TransformVec4f(m_origin, matrix);
+		m_origin = CudaMath::Transform(m_origin, matrix);
 		m_origin.m_v4.w = 1;
-		TransformVec4f(m_direction, matrix);
+		m_direction = CudaMath::Transform(m_direction, matrix);
 		m_direction.Normalize3();
 		m_direction.m_v4.w = 0;
 	}
