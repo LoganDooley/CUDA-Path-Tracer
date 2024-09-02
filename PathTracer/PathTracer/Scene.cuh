@@ -14,9 +14,11 @@ struct Object {
 		return result;
 	}
 
-	__device__ inline bool IntersectObject(Ray r) {
+	__device__ inline IntersectionData IntersectObject(Ray r) {
 		r.Transform(m_invModel);
-		return Shape::Intersect(r, m_type);
+		IntersectionData intersectionData = Shape::Intersect(r, m_type);
+		intersectionData.Transform(m_model, m_invModel);
+		return intersectionData;
 	}
 
 	Shape::Type m_type;
@@ -29,14 +31,15 @@ struct Scene {
 		m_objects.push_back(object);
 	}
 
-	__device__ bool IntersectScene(Ray r) {
+	__device__ IntersectionData IntersectScene(Ray r) {
 		for (int i = 0; i < m_objects.size(); i++) {
 			Object object = m_objects[i];
-			if (object.IntersectObject(r)) {
-				return true;
+			IntersectionData intersectionData = object.IntersectObject(r);
+			if (intersectionData.intersected) {
+				return intersectionData;
 			}
 		}
-		return false;
+		return {};
 	}
 
 	thrust::device_vector<Object> m_objects;

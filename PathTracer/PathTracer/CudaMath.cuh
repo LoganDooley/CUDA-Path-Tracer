@@ -14,11 +14,11 @@ namespace CudaMath {
 			m_v3.z /= length;
 		}
 
-		inline __device__ const float Length() {
+		inline __device__ float Length() const {
 			return sqrtf(powf(m_v3.x, 2) + powf(m_v3.y, 2) + powf(m_v3.z, 2));
 		}
 
-		inline __device__ const Vec3f operator-(const Vec3f& other) {
+		inline __device__ Vec3f operator-(const Vec3f& other) const {
 			Vec3f result = {};
 			result.m_v3.x = m_v3.x - other.m_v3.x;
 			result.m_v3.y = m_v3.y - other.m_v3.y;
@@ -26,7 +26,7 @@ namespace CudaMath {
 			return result;
 		}
 
-		inline __device__ const Vec3f operator+(const Vec3f& other) {
+		inline __device__ Vec3f operator+(const Vec3f& other) const {
 			Vec3f result = {};
 			result.m_v3.x = m_v3.x + other.m_v3.x;
 			result.m_v3.y = m_v3.y + other.m_v3.y;
@@ -34,12 +34,29 @@ namespace CudaMath {
 			return result;
 		}
 
-		inline __device__ const Vec3f operator*(const float& other) {
+		inline __device__ Vec3f operator*(const float& other) const {
 			Vec3f result = {};
 			result.m_v3.x = m_v3.x * other;
 			result.m_v3.y = m_v3.y * other;
 			result.m_v3.z = m_v3.z * other;
 			return result;
+		}
+
+		inline __device__ float operator[](const int index) const {
+			switch (index) {
+			case 0:
+				return m_v3.x;
+				break;
+			case 1:
+				return m_v3.y;
+				break;
+			case 2:
+				return m_v3.z;
+				break;
+			default:
+				return 0;
+				break;
+			}
 		}
 
 		float3 m_v3;
@@ -91,15 +108,19 @@ namespace CudaMath {
 			m_v4.z /= length3;
 		}
 
-		inline __device__ const float Length() {
+		inline __device__ float Length() const {
 			return sqrtf(powf(m_v4.x, 2) + powf(m_v4.y, 2) + powf(m_v4.z, 2) + powf(m_v4.w, 2));
 		}
 
-		inline __device__ const float Length3() {
+		inline __device__ float Length3() const {
 			return sqrtf(powf(m_v4.x, 2) + powf(m_v4.y, 2) + powf(m_v4.z, 2));
 		}
 
-		inline __device__ const Vec4f operator-(const Vec4f& other) {
+		inline __device__ float Dot(const Vec4f& other) const {
+			return m_v4.x * other.m_v4.x + m_v4.y * other.m_v4.y + m_v4.z * other.m_v4.z + m_v4.w * other.m_v4.w;
+		}
+
+		inline __device__ Vec4f operator-(const Vec4f& other) const {
 			Vec4f result = {};
 			result.m_v4.x = m_v4.x - other.m_v4.x;
 			result.m_v4.y = m_v4.y - other.m_v4.y;
@@ -108,7 +129,7 @@ namespace CudaMath {
 			return result;
 		}
 
-		inline __device__ const Vec4f operator+(const Vec4f& other) {
+		inline __device__ Vec4f operator+(const Vec4f& other) const {
 			Vec4f result = {};
 			result.m_v4.x = m_v4.x + other.m_v4.x;
 			result.m_v4.y = m_v4.y + other.m_v4.y;
@@ -117,13 +138,33 @@ namespace CudaMath {
 			return result;
 		}
 
-		inline __device__ const Vec4f operator*(const float& other) {
+		inline __device__ Vec4f operator*(const float& other) const {
 			Vec4f result = {};
 			result.m_v4.x = m_v4.x * other;
 			result.m_v4.y = m_v4.y * other;
 			result.m_v4.z = m_v4.z * other;
 			result.m_v4.w = m_v4.w * other;
 			return result;
+		}
+
+		inline __device__ float operator[](const int index) const {
+			switch (index) {
+			case 0:
+				return m_v4.x;
+				break;
+			case 1:
+				return m_v4.y;
+				break;
+			case 2:
+				return m_v4.z;
+				break;
+			case 3:
+				return m_v4.w;
+				break;
+			default:
+				return 0;
+				break;
+			}
 		}
 
 		float4 m_v4;
@@ -147,18 +188,27 @@ namespace CudaMath {
 			return result;
 		}
 
+		inline __device__ Mat4f GetTranspose() const {
+			Mat4f result = 
+			{
+				{ make_float4(m_r0[0], m_r1[0], m_r2[0], m_r3[0])},
+				{ make_float4(m_r0[1], m_r1[1], m_r2[1], m_r3[1])},
+				{ make_float4(m_r0[2], m_r1[2], m_r2[2], m_r3[2])},
+				{ make_float4(m_r0[3], m_r1[3], m_r2[3], m_r3[3])}
+			};
+			return result;
+		}
+
 		Vec4f m_r0;
 		Vec4f m_r1;
 		Vec4f m_r2;
 		Vec4f m_r3;
 	};
 
-	inline __device__ Vec4f Transform(const Mat4f& mat, const Vec4f& vec) {
-		Vec4f result = {};
-		result.m_v4.x = Dot(mat.m_r0, vec);
-		result.m_v4.y = Dot(mat.m_r1, vec);
-		result.m_v4.z = Dot(mat.m_r2, vec);
-		result.m_v4.w = Dot(mat.m_r3, vec);
-		return result;
+	inline __device__ void TransformVec4f(Vec4f& vec, const Mat4f& mat) {
+		vec.m_v4.x = Dot(mat.m_r0, vec);
+		vec.m_v4.y = Dot(mat.m_r1, vec);
+		vec.m_v4.z = Dot(mat.m_r2, vec);
+		vec.m_v4.w = Dot(mat.m_r3, vec);
 	}
 }

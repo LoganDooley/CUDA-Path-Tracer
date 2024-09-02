@@ -55,7 +55,9 @@ __global__ void PathTraceScene(float* render,
 	// World space ray
 	r.Transform(invView);
 
-	bool intersected = scene.IntersectScene(r);
+	IntersectionData intersectionData = scene.IntersectScene(r);
+
+	bool intersected = intersectionData.intersected;
 
 	render[redIndex] = 0;
 	render[greenIndex] = 0;
@@ -65,6 +67,9 @@ __global__ void PathTraceScene(float* render,
 		render[redIndex] = 1;
 		render[greenIndex] = 1;
 		render[blueIndex] = 1;
+		//render[redIndex] = intersectionData.m_normal.m_v4.x;
+		//render[greenIndex] = intersectionData.m_normal.m_v4.y;
+		//render[blueIndex] = intersectionData.m_normal.m_v4.z;
 	}
 }
 
