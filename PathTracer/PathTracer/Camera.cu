@@ -56,6 +56,8 @@ void Camera::Resize(int screenWidth, int screenHeight) {
 	m_aspect = float(screenWidth) / screenHeight;
 	float halfWidth = m_near * glm::tan(m_fov / 2);
 	float halfHeight = halfWidth / m_aspect;
+	m_pixelWidth = halfWidth / (float(screenWidth) / 2);
+	m_pixelHeight = halfHeight / (float(screenHeight) / 2);
 	
 	// Will no-op if m_pixelCenters is nullptr
 	cudaFree(d_pixelCorners);
@@ -126,6 +128,10 @@ void Camera::SetCursorPos(glm::vec2 position)
 		UpdateInverseView();
 	}
 	m_cursorPos = position;
+}
+
+glm::vec2 Camera::GetPixelSize() {
+	return glm::vec2(m_pixelWidth, m_pixelHeight);
 }
 
 void Camera::UpdateInverseView()

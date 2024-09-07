@@ -2,6 +2,7 @@
 
 #include "Camera.cuh"
 #include <memory>
+#include <curand_kernel.h>
 
 class PathTracer
 {
@@ -27,4 +28,6 @@ private:
 	float* d_render = nullptr;
 	float* h_render = nullptr;
 	void* m_scene;
+
+	curandState_t* d_curandStates = nullptr;
 };

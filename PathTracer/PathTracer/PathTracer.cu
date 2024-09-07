@@ -13,6 +13,11 @@ inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort =
 	}
 }
 
+__global__ void CurandSetup(curandState* state) {
+	int id = blockIdx.x;
+	curand_init(1234, id, 0, &state[id]);
+}
+
 PathTracer::PathTracer(int screenWidth, int screenHeight):
 	m_camera(std::make_unique<Camera>(0.1, screenWidth, screenHeight)),
 	m_screenWidth(screenWidth),
@@ -22,6 +27,9 @@ PathTracer::PathTracer(int screenWidth, int screenHeight):
 	((Scene*)m_scene)->AddObject((Object::CreateObject(Shape::Type::Sphere, glm::mat4(1))));
 
 	Resize(screenWidth, screenHeight);
+
+	cudaMalloc((void**)&d_curandStates, m_screenWidth * m_screenHeight * sizeof(curandState));
+	CurandSetup << <m_screenWidth * m_screenHeight, 1 >> > (d_curandStates);
 }
 
 PathTracer::~PathTracer()
@@ -32,7 +40,9 @@ __global__ void PathTraceScene(float* render,
 	const float* pixelCorners, 
 	const int screenWidth,
 	CudaMath::Mat4f invView,
-	Scene scene)
+	Scene scene,
+	curandState* state,
+	float2 pixelSize)
 {
 	int x = blockIdx.x;
 	int y = blockIdx.y;
@@ -46,10 +56,16 @@ __global__ void PathTraceScene(float* render,
 	float cornerY = pixelCorners[greenIndex];
 	float cornerZ = pixelCorners[blueIndex];
 
+	curandState myState = state[pixelIndex];
+
+	float random = curand_uniform(&myState);
+
+	state[pixelIndex] = myState;
+
 	// Camera space ray
 	Ray r = {
 		{make_float4(0, 0, 0, 1)}, 
-		{make_float4(cornerX, cornerY, cornerZ, 0)}
+		{make_float4(cornerX + random * pixelSize.x, cornerY + random * pixelSize.y, cornerZ, 0)}
 	};
 
 	// World space ray
@@ -79,13 +95,16 @@ void PathTracer::Render(int spp)
 {
 	Scene* scene = (Scene*)m_scene;
 
+	float2 pixelSize = make_float2(m_camera->GetPixelSize().x, m_camera->GetPixelSize().y);
+
 	// TODO: Make spp work properly and don't use a whole block for one pixel
 	PathTraceScene<<<dim3(m_screenWidth, m_screenHeight), 1 >>> (d_render, 
 		m_camera->GetDevicePixelCorners(),
 		m_screenWidth,
 		CudaMath::Mat4f::FromGLM(m_camera->GetInverseView()),
-		*scene);
-	//gpuErrchk(cudaPeekAtLastError());
+		*scene,
+		d_curandStates,
+		pixelSize);
 }
 
 void PathTracer::Resize(int screenWidth, int screenHeight)

@@ -17,6 +17,7 @@ public:
 	void SetKeyPressed(int key, bool pressed);
 	void SetRightMouseButtonPressed(bool pressed);
 	void SetCursorPos(glm::vec2 position);
+	glm::vec2 GetPixelSize();
 
 private:
 	void UpdateInverseView();
@@ -35,4 +36,6 @@ private:
 	std::unordered_map<int, bool> m_keyMap;
 	bool m_rightMouseButtonPressed;
 	glm::vec2 m_cursorPos = glm::vec2(0, 0);
+	float m_pixelWidth;
+	float m_pixelHeight;
 };
